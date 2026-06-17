@@ -229,6 +229,15 @@
     margin-bottom: 2px;
     filter: brightness(0) invert(1);
   }
+
+  .modal-social { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+  .modal-social a { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; text-decoration: none; transition: opacity 0.15s; letter-spacing: 0.04em; }
+  .modal-social a:hover { opacity: 0.8; }
+  .social-instagram { background: #E1306C; color: #fff; }
+  .social-facebook  { background: #1877F2; color: #fff; }
+  .social-twitter   { background: #000; color: #fff; }
+  .social-youtube   { background: #FF0000; color: #fff; }
+  .social-tiktok    { background: #010101; color: #fff; }
 </style>
 </head>
 <body>
@@ -305,6 +314,7 @@
       <div class="modal-vehicle-name" id="modal-name"></div>
       <div class="modal-tags" id="modal-tags"></div>
       <a class="modal-site-btn" id="modal-site" href="#" target="_blank">🔗 Acesse o site</a>
+      <div id="modal-social" class="modal-social"></div>
       <div class="modal-desc" id="modal-desc"></div>
       <div id="modal-prog-section"></div>
       <div class="modal-note" id="modal-note" style="display:none;"></div>
@@ -506,6 +516,24 @@ function openModal(idx) {
     siteEl.href = v.Site.startsWith('http') ? v.Site : 'https://' + v.Site;
     siteEl.style.display = 'inline-flex';
   } else { siteEl.style.display = 'none'; }
+
+  // Redes sociais
+  const socialEl = document.getElementById('modal-social');
+  const redes = [
+    { campo: 'Instagram', classe: 'social-instagram', emoji: '📸', label: 'Instagram' },
+    { campo: 'Facebook',  classe: 'social-facebook',  emoji: '👥', label: 'Facebook' },
+    { campo: 'X_Twitter', classe: 'social-twitter',   emoji: '𝕏',  label: 'X' },
+    { campo: 'YouTube',   classe: 'social-youtube',   emoji: '▶',  label: 'YouTube' },
+    { campo: 'TikTok',    classe: 'social-tiktok',    emoji: '🎵', label: 'TikTok' },
+  ];
+  const links = redes
+    .filter(r => v[r.campo] && v[r.campo].trim())
+    .map(r => {
+      const url = v[r.campo].startsWith('http') ? v[r.campo] : 'https://' + v[r.campo];
+      return `<a href="${url}" target="_blank" class="${r.classe}">${r.emoji} ${r.label}</a>`;
+    }).join('');
+  socialEl.innerHTML = links;
+  socialEl.style.display = links ? 'flex' : 'none';
   document.getElementById('modal-desc').textContent = v.Detalhes || v.Resumo || '';
 
   // Tabela de programação
@@ -554,4 +582,5 @@ function exportCSV() {
 </script>
 </body>
 </html>
+
 
