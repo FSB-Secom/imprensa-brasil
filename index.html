@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Perfil da Imprensa · FSB</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -258,6 +259,22 @@
     color: rgba(255,255,255,0.7);
     font-weight: 600;
   }
+
+  .forgot-link { display: block; margin-top: 10px; font-size: 12px; color: var(--green-mid); background: none; border: none; cursor: pointer; text-decoration: underline; }
+  .forgot-link:hover { color: var(--green-dark); }
+  .forgot-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; display: none; align-items: center; justify-content: center; padding: 20px; }
+  .forgot-overlay.open { display: flex; }
+  .forgot-box { background: #fff; border-radius: 16px; padding: 32px; width: 100%; max-width: 360px; text-align: center; }
+  .forgot-title { font-size: 15px; font-weight: 700; color: var(--green-dark); margin-bottom: 8px; }
+  .forgot-sub { font-size: 13px; color: #888; margin-bottom: 20px; line-height: 1.5; }
+  .forgot-box input { width: 100%; padding: 12px 14px; border: 1.5px solid #ddd; border-radius: 10px; font-size: 13px; outline: none; margin-bottom: 12px; transition: border-color 0.2s; }
+  .forgot-box input:focus { border-color: var(--green-mid); }
+  .forgot-send { width: 100%; padding: 12px; background: var(--green-dark); color: #fff; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .forgot-send:hover { background: var(--green-mid); }
+  .forgot-cancel { display: block; margin-top: 10px; font-size: 12px; color: #aaa; background: none; border: none; cursor: pointer; text-decoration: underline; }
+  .forgot-msg { font-size: 13px; margin-top: 10px; display: none; }
+  .forgot-msg.ok  { color: var(--green-mid); }
+  .forgot-msg.err { color: #c0392b; }
 </style>
 </head>
 <body>
@@ -271,6 +288,7 @@
     <input type="password" id="pwd-input" placeholder="SENHA" autocomplete="current-password" />
     <button onclick="checkLogin()">Entrar</button>
     <div class="login-error" id="login-error">Usuário ou senha incorretos.</div>
+    <button class="forgot-link" onclick="openForgot()">Esqueci minha senha</button>
   </div>
 </div>
 
@@ -609,6 +627,49 @@ function closeModalDirect() {
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModalDirect(); });
 
+
+// ── EMAILJS ────────────────────────────────────────────────────
+emailjs.init('QNWuFWUPAP0AXsuWR');
+
+function openForgot() {
+  document.getElementById('forgot-overlay').classList.add('open');
+  document.getElementById('forgot-msg').style.display = 'none';
+  document.getElementById('forgot-name').value = '';
+  document.getElementById('forgot-email').value = '';
+}
+
+function closeForgot() {
+  document.getElementById('forgot-overlay').classList.remove('open');
+}
+
+function sendForgot() {
+  const name  = document.getElementById('forgot-name').value.trim();
+  const email = document.getElementById('forgot-email').value.trim();
+  const msgEl = document.getElementById('forgot-msg');
+
+  if (!name || !email) {
+    msgEl.textContent = 'Preencha nome e e-mail.';
+    msgEl.className = 'forgot-msg err';
+    msgEl.style.display = 'block';
+    return;
+  }
+
+  emailjs.send('service_l5vjb9v', 'template_9ee01jw', {
+    usuario: '—',
+    name:    name,
+    email:   email,
+  }).then(() => {
+    msgEl.textContent = 'Solicitação enviada! Em breve você receberá suas credenciais.';
+    msgEl.className = 'forgot-msg ok';
+    msgEl.style.display = 'block';
+    setTimeout(closeForgot, 3000);
+  }).catch(() => {
+    msgEl.textContent = 'Erro ao enviar. Tente novamente ou entre em contato diretamente.';
+    msgEl.className = 'forgot-msg err';
+    msgEl.style.display = 'block';
+  });
+}
+
 // ── EXPORT ────────────────────────────────────────────────────
 function exportCSV() {
   const headers = ['Nome','Grupo','UF','Segmento','Abrangencia','Publico','Site'];
@@ -620,6 +681,19 @@ function exportCSV() {
   a.download = 'imprensa_filtrada.csv'; a.click();
 }
 </script>
+
+<!-- RECUPERAÇÃO DE SENHA -->
+<div class="forgot-overlay" id="forgot-overlay">
+  <div class="forgot-box">
+    <div class="forgot-title">Recuperar acesso</div>
+    <div class="forgot-sub">Informe seu nome e e-mail. A equipe responsável entrará em contato com suas credenciais.</div>
+    <input type="text" id="forgot-name" placeholder="Seu nome" />
+    <input type="email" id="forgot-email" placeholder="Seu e-mail" />
+    <button class="forgot-send" onclick="sendForgot()">Enviar solicitação</button>
+    <button class="forgot-cancel" onclick="closeForgot()">Cancelar</button>
+    <div class="forgot-msg" id="forgot-msg"></div>
+  </div>
+</div>
+
 </body>
 </html>
-
