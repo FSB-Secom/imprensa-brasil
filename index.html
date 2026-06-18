@@ -99,7 +99,7 @@
   .vcard-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
   .tag { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 100px; letter-spacing: 0.03em; }
   .tag-TV       { background: var(--green-dark); color: #fff; }
-  .tag-Radio    { background: #3A5C8A; color: #fff; }
+  .tag-Radio    { background: var(--green-light); color: #fff; }
   .tag-Impresso { background: var(--green-mid); color: #fff; }
   .tag-Digital  { background: #6B4E8A; color: #fff; }
   .tag-Agencia  { background: #8A4E3A; color: #fff; }
@@ -238,6 +238,26 @@
   .social-twitter   { background: #000; color: #fff; }
   .social-youtube   { background: #FF0000; color: #fff; }
   .social-tiktok    { background: #010101; color: #fff; }
+
+  /* ── FOOTER ── */
+  .app-footer {
+    flex-shrink: 0;
+    background: var(--green-dark);
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .footer-credit {
+    font-size: 11px;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 0.04em;
+  }
+  .footer-credit strong {
+    color: rgba(255,255,255,0.7);
+    font-weight: 600;
+  }
 </style>
 </head>
 <body>
@@ -247,9 +267,10 @@
   <div class="login-box">
     <img src="logo_fsb.png" alt="FSB Comunicação" class="login-logo-img" />
     <div class="login-subtitle">Perfil da Imprensa<br>Regional</div>
-    <input type="password" id="pwd-input" placeholder="SENHA DE ACESSO" />
+    <input type="text" id="user-input" placeholder="USUÁRIO" autocomplete="username" />
+    <input type="password" id="pwd-input" placeholder="SENHA" autocomplete="current-password" />
     <button onclick="checkLogin()">Entrar</button>
-    <div class="login-error" id="login-error">Senha incorreta.</div>
+    <div class="login-error" id="login-error">Usuário ou senha incorretos.</div>
   </div>
 </div>
 
@@ -298,6 +319,12 @@
       </div>
     </div>
   </div>
+
+  <footer class="app-footer">
+    <span class="footer-credit"><strong>FSB Comunicação</strong> · Perfil da Imprensa Regional</span>
+    <span class="footer-credit">Uso interno e restrito</span>
+  </footer>
+
 </div>
 
 <!-- MODAL -->
@@ -325,14 +352,21 @@
 <script>
 const URL_VEICULOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS0UNHZYOe2f1Go00lEVPIPIsut2lMwxfTHetLyi0j3JHXiCg2mcprXJB5me6lZPUxTP1IoQhPreWh2/pub?gid=1359374207&single=true&output=csv';
 const URL_ESTADOS  = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS0UNHZYOe2f1Go00lEVPIPIsut2lMwxfTHetLyi0j3JHXiCg2mcprXJB5me6lZPUxTP1IoQhPreWh2/pub?gid=404608958&single=true&output=csv';
-const PASSWORD     = 'FSB2026';
+const USERS = {
+  'julia.oliveira':  'FSB2026',
+  'usuario2':        'senha123',
+  'usuario3':        'senha456',
+};
 const GEOJSON_URL  = 'https://cdn.jsdelivr.net/gh/codeforgermany/click_that_hood@main/public/data/brazil-states.geojson';
 
 let veiculos = [], estados = {}, selectedUF = null, introExpanded = false, currentFiltered = [];
 
 // ── LOGIN ──────────────────────────────────────────────────────
 function checkLogin() {
-  if (document.getElementById('pwd-input').value === PASSWORD) {
+  const user = document.getElementById('user-input').value.trim().toLowerCase();
+  const pwd  = document.getElementById('pwd-input').value;
+  if (USERS[user] && USERS[user] === pwd) {
+    sessionStorage.setItem('fsb_auth', user);
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
     initApp();
@@ -340,6 +374,16 @@ function checkLogin() {
     document.getElementById('login-error').style.display = 'block';
   }
 }
+
+// Verificar sessão ao carregar
+(function() {
+  if (sessionStorage.getItem('fsb_auth')) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    document.addEventListener('DOMContentLoaded', initApp);
+  }
+})();
+document.getElementById('user-input').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('pwd-input').focus(); });
 document.getElementById('pwd-input').addEventListener('keydown', e => { if (e.key === 'Enter') checkLogin(); });
 
 function initApp() { loadMap(); loadVeiculos(); loadEstados(); }
@@ -479,7 +523,7 @@ function clearFilters() {
 // ── CARDS ─────────────────────────────────────────────────────
 function renderTags(v) {
   const segs = (v.Segmento||'').split(',').map(s => s.trim()).filter(Boolean);
-  const sc = s => 'tag tag-' + s.replace(/[^a-zA-Z]/g,'');
+  const sc = s => 'tag tag-' + s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z]/g,'');
   return [
     ...segs.map(s => `<span class="${sc(s)}">${s}</span>`),
     v.Abrangencia ? `<span class="tag tag-abr">${v.Abrangencia}</span>` : '',
